@@ -1,6 +1,6 @@
 <?php
 // ============================================
-// COMPLETE PAID WiFi SYSTEM - BINGWA SOKONI STYLE
+// COMPLETE PAID WiFi SYSTEM - SpeedTon B6 WiFi
 // Single file solution with all features
 // ============================================
 
@@ -9,7 +9,7 @@ session_start();
 // ========== CONFIGURATION ==========
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', 'password');
+define('DB_PASS', '');
 define('DB_NAME', 'wifi_payment_system');
 
 // Create database and tables if they don't exist
@@ -77,10 +77,10 @@ function initDatabase() {
     
     if ($row['count'] == 0) {
         $conn->query("INSERT INTO packages (name, duration_hours, price) VALUES 
-            ('1 Hour', 1, 50.00),
-            ('3 Hours', 3, 120.00),
+            ('1 Hour', 1, 10.00),
+            ('3 Hours', 3, 15.00),
             ('24 Hours', 24, 200.00),
-            ('3 Days', 72, 500.00),
+            ('3 Days', 72, 55.00),
             ('7 Days', 168, 1000.00)
         ");
         $conn->query("INSERT INTO packages (name, duration_hours, price, is_midnight_package) VALUES 
@@ -288,7 +288,7 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingwa Sokoni WiFi - High Speed Internet Access</title>
+    <title>SpeedTon B6 WiFi - High Speed Internet Access</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -576,7 +576,7 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
     <nav class="navbar navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-wifi"></i> Bingwa Sokoni WiFi
+                <i class="fas fa-wifi"></i> SpeedTon B6 WiFi
             </a>
             <div>
                 <span class="text-white">
@@ -599,12 +599,91 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
         </div>
     </div>
 
-    <div class="container">
-        <div class="row" id="packages-container">
-            <!-- Packages will be loaded here -->
+   <div class="container">
+    <div class="row">
+
+        <!-- 3 Hours Package -->
+        <div class="col-md-4 col-lg-4">
+            <div class="package-card" onclick="selectPackageStatic(2, '3 Hours', 3, 15)">
+                <div class="package-name">3 Hours</div>
+                <div class="package-duration">
+                    <i class="far fa-clock"></i> 3 Hours
+                </div>
+                <div class="package-price">
+                    KES 15<small>KES</small>
+                </div>
+                <button class="btn-buy">
+                    <i class="fas fa-shopping-cart"></i> Buy Now
+                </button>
+            </div>
+        </div>
+
+        <!-- 24 Hours Package (Most Popular) -->
+        <div class="col-md-4 col-lg-4">
+            <div class="package-card popular" onclick="selectPackageStatic(3, '24 Hours', 24, 30)">
+                <div class="popular-badge">🔥 Most Popular</div>
+                <div class="package-name">24 Hours</div>
+                <div class="package-duration">
+                    <i class="far fa-clock"></i> 24 Hours
+                </div>
+                <div class="package-price">
+                    KES 30<small>KES</small>
+                </div>
+                <button class="btn-buy">
+                    <i class="fas fa-shopping-cart"></i> Buy Now
+                </button>
+            </div>
+        </div>
+
+        <!-- 3 Days Package -->
+        <div class="col-md-4 col-lg-4">
+            <div class="package-card" onclick="selectPackageStatic(4, '3 Days', 55, )">
+                <div class="package-name">3 Days</div>
+                <div class="package-duration">
+                    <i class="far fa-clock"></i> 3 Days
+                </div>
+                <div class="package-price">
+                    KES 55<small>KES</small>
+                </div>
+                <button class="btn-buy">
+                    <i class="fas fa-shopping-cart"></i> Buy Now
+                </button>
+            </div>
+        </div>
+
+        <!-- 7 Days Package -->
+        <div class="col-md-4 col-lg-4">
+            <div class="package-card" onclick="selectPackageStatic(5, '7 Days', 168, 150)">
+                <div class="package-name">7 Days</div>
+                <div class="package-duration">
+                    <i class="far fa-clock"></i> 7 Days
+                </div>
+                <div class="package-price">
+                    KES 150<small>KES</small>
+                </div>
+                <button class="btn-buy">
+                    <i class="fas fa-shopping-cart"></i> Buy Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Till Midnight Package -->
+        <div class="col-md-4 col-lg-4">
+            <div class="package-card" onclick="selectPackageStatic(6, '30 Days', 0, 300)">
+                <div class="package-name">Till Midnight</div>
+                <div class="package-duration">
+                    <i class="far fa-clock"></i> Valid Until 11:59 PM
+                </div>
+                <div class="package-price">
+                    KES 150<small>KES</small>
+                </div>
+                <button class="btn-buy">
+                    <i class="fas fa-shopping-cart"></i> Buy Now
+                </button>
+            </div>
         </div>
     </div>
-
+</div>
     <!-- Payment Modal -->
     <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -691,8 +770,8 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
 
     <footer>
         <div class="container text-center">
-            <p>&copy; 2024 Bingwa Sokoni WiFi. All rights reserved.</p>
-            <small>Terms & Conditions Apply | 24/7 Customer Support: 0700 000 000</small>
+            <p>&copy; 2024  SpeedTon B6 WiFi. All rights reserved.</p>
+            <small>Terms & Conditions Apply | 24/7 Customer Support: 0115777875/0111207434 </small>
         </div>
     </footer>
 
@@ -782,6 +861,28 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
             });
         }
 
+                function selectPackageStatic(id, name, hours, price) {
+            selectedPackage = {
+                id: id,
+                name: name,
+                duration_hours: hours,
+                price: price,
+                is_midnight_package: (name === 'Till Midnight')
+            };
+            
+            let durationText = selectedPackage.is_midnight_package ? 'Valid Until Midnight' : 
+                             `${selectedPackage.duration_hours} Hour${selectedPackage.duration_hours > 1 ? 's' : ''}`;
+            
+            $('#selected-package-info').html(`
+                <div class="alert alert-info">
+                    <strong><i class="fas fa-gem"></i> ${selectedPackage.name}</strong><br>
+                    <i class="fas fa-tag"></i> Price: <strong>KES ${price.toLocaleString()}</strong><br>
+                    <i class="fas fa-hourglass-half"></i> Duration: ${durationText}
+                </div>
+            `);
+            $('#paymentModal').modal('show');
+        }
+        
         function selectPaymentMethod(method) {
             selectedMethod = method;
             $('.payment-method').removeClass('selected');
