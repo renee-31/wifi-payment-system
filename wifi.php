@@ -44,9 +44,9 @@ function initDatabase() {
             username VARCHAR(50) UNIQUE NOT NULL,
             password VARCHAR(100) NOT NULL,
             package_id INT,
-            start_time DATETIME NOT NULL,
+            start_time DATETIME,
             end_time DATETIME NOT NULL,
-            is_active BOOLEAN DEFAULT TRUE,
+            is_active BOOLEAN DEFAULT FALSE,
             ip_address VARCHAR(45),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (package_id) REFERENCES packages(id),
@@ -71,6 +71,27 @@ function initDatabase() {
         )
     ");
     
+    // Create payment_sessions table for tracking STK pushes
+    $conn->query("
+        CREATE TABLE IF NOT EXISTS payment_sessions (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            checkout_request_id VARCHAR(100) UNIQUE,
+            merchant_request_id VARCHAR(100),
+            session_id INT,
+            mac_address VARCHAR(17),
+            username VARCHAR(50),
+            password VARCHAR(100),
+            package_id INT,
+            amount DECIMAL(10,2),
+            phone_number VARCHAR(15),
+            end_time DATETIME,
+            status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_checkout (checkout_request_id),
+            INDEX idx_status (status)
+        )
+    ");
+    
     // Insert default packages if not exists
     $check = $conn->query("SELECT COUNT(*) as count FROM packages");
     $row = $check->fetch_assoc();
@@ -79,9 +100,9 @@ function initDatabase() {
         $conn->query("INSERT INTO packages (name, duration_hours, price) VALUES 
             ('1 Hour', 1, 10.00),
             ('3 Hours', 3, 15.00),
-            ('24 Hours', 24, 200.00),
+            ('24 Hours', 24, 30.00),
             ('3 Days', 72, 55.00),
-            ('7 Days', 168, 1000.00)
+            ('7 Days', 168, 150.00)
         ");
         $conn->query("INSERT INTO packages (name, duration_hours, price, is_midnight_package) VALUES 
             ('Till Midnight', 0, 150.00, TRUE)
@@ -117,15 +138,14 @@ function calculateEndTime($package_id) {
     $conn->close();
     
     $now = new DateTime();
+    $now->setTimezone(new DateTimeZone('Africa/Nairobi'));
     
     if ($package['is_midnight_package']) {
-        // Till midnight (23:59:59)
-        $midnight = new DateTime('tomorrow midnight');
+        $midnight = new DateTime('tomorrow midnight', new DateTimeZone('Africa/Nairobi'));
         $midnight->modify('-1 second');
         return $midnight->format('Y-m-d H:i:s');
     } else {
-        // Add hours
-        $now->modify('+' . $package['duration_hours'] . ' hours');
+        $now->modify('+' . intval($package['duration_hours']) . ' hours');
         return $now->format('Y-m-d H:i:s');
     }
 }
@@ -167,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
         exit;
     }
     
-    // Process payment
+    // Process payment (simulated - for fallback)
     if ($action === 'process_payment' || (isset($data['action']) && $data['action'] === 'process_payment')) {
         $package_id = $data['package_id'];
         $mac_address = $data['mac_address'];
@@ -599,91 +619,12 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
         </div>
     </div>
 
-   <div class="container">
-    <div class="row">
-
-        <!-- 3 Hours Package -->
-        <div class="col-md-4 col-lg-4">
-            <div class="package-card" onclick="selectPackageStatic(2, '3 Hours', 3, 15)">
-                <div class="package-name">3 Hours</div>
-                <div class="package-duration">
-                    <i class="far fa-clock"></i> 3 Hours
-                </div>
-                <div class="package-price">
-                    KES 15<small>KES</small>
-                </div>
-                <button class="btn-buy">
-                    <i class="fas fa-shopping-cart"></i> Buy Now
-                </button>
-            </div>
-        </div>
-
-        <!-- 24 Hours Package (Most Popular) -->
-        <div class="col-md-4 col-lg-4">
-            <div class="package-card popular" onclick="selectPackageStatic(3, '24 Hours', 24, 30)">
-                <div class="popular-badge">🔥 Most Popular</div>
-                <div class="package-name">24 Hours</div>
-                <div class="package-duration">
-                    <i class="far fa-clock"></i> 24 Hours
-                </div>
-                <div class="package-price">
-                    KES 30<small>KES</small>
-                </div>
-                <button class="btn-buy">
-                    <i class="fas fa-shopping-cart"></i> Buy Now
-                </button>
-            </div>
-        </div>
-
-        <!-- 3 Days Package -->
-        <div class="col-md-4 col-lg-4">
-            <div class="package-card" onclick="selectPackageStatic(4, '3 Days', 55, )">
-                <div class="package-name">3 Days</div>
-                <div class="package-duration">
-                    <i class="far fa-clock"></i> 3 Days
-                </div>
-                <div class="package-price">
-                    KES 55<small>KES</small>
-                </div>
-                <button class="btn-buy">
-                    <i class="fas fa-shopping-cart"></i> Buy Now
-                </button>
-            </div>
-        </div>
-
-        <!-- 7 Days Package -->
-        <div class="col-md-4 col-lg-4">
-            <div class="package-card" onclick="selectPackageStatic(5, '7 Days', 168, 150)">
-                <div class="package-name">7 Days</div>
-                <div class="package-duration">
-                    <i class="far fa-clock"></i> 7 Days
-                </div>
-                <div class="package-price">
-                    KES 150<small>KES</small>
-                </div>
-                <button class="btn-buy">
-                    <i class="fas fa-shopping-cart"></i> Buy Now
-                </button>
-            </div>
-        </div>
-
-        <!-- Till Midnight Package -->
-        <div class="col-md-4 col-lg-4">
-            <div class="package-card" onclick="selectPackageStatic(6, '30 Days', 0, 300)">
-                <div class="package-name">Till Midnight</div>
-                <div class="package-duration">
-                    <i class="far fa-clock"></i> Valid Until 11:59 PM
-                </div>
-                <div class="package-price">
-                    KES 150<small>KES</small>
-                </div>
-                <button class="btn-buy">
-                    <i class="fas fa-shopping-cart"></i> Buy Now
-                </button>
-            </div>
+    <div class="container">
+        <div id="packages-container" class="row">
+            <!-- Packages will be loaded dynamically here -->
         </div>
     </div>
-</div>
+
     <!-- Payment Modal -->
     <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -752,8 +693,39 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
                     </div>
                     <div class="alert alert-info mt-3">
                         <i class="fas fa-info-circle"></i> 
-                        These credentials are valid only on this device. Sharing will not work.
+                        <strong>Important:</strong> These credentials are valid only on this device. 
+                        Please save them for future reference.
                     </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-primary" onclick="window.location.reload()">
+                            <i class="fas fa-wifi"></i> Connect Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waiting Modal -->
+    <div class="modal fade" id="waitingModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Processing Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-info mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Waiting for M-Pesa payment</h5>
+                    <p>Please check your phone and enter your M-Pesa PIN to complete the payment.</p>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-mobile-alt"></i> 
+                        You will receive a prompt on your phone
+                    </div>
+                    <div id="paymentStatusMessage" class="mt-3"></div>
+                    <button class="btn btn-secondary mt-3" onclick="cancelPayment()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -770,8 +742,8 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
 
     <footer>
         <div class="container text-center">
-            <p>&copy; 2024  SpeedTon B6 WiFi. All rights reserved.</p>
-            <small>Terms & Conditions Apply | 24/7 Customer Support: 0115777875/0111207434 </small>
+            <p>&copy; 2024 SpeedTon B6 WiFi. All rights reserved.</p>
+            <small>Terms & Conditions Apply | 24/7 Customer Support: 0115777875/0111207434</small>
         </div>
     </footer>
 
@@ -782,6 +754,7 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
         let selectedMethod = null;
         let macAddress = '<?php echo $mac_address; ?>';
         let sessionCheckInterval = null;
+        let pollInterval = null;
 
         // Load packages on page load
         $(document).ready(function() {
@@ -795,15 +768,22 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
                 method: 'POST',
                 data: JSON.stringify({action: 'get_packages'}),
                 contentType: 'application/json',
+                dataType: 'json',
                 success: function(response) {
-                    const packages = JSON.parse(response);
+                    console.log('Packages loaded:', response);
+                    let packages = response;
+                    
+                    if (typeof packages === 'string') {
+                        packages = JSON.parse(packages);
+                    }
+                    
                     let html = '';
                     packages.forEach((pkg, index) => {
                         let popularClass = '';
                         let popularBadge = '';
                         if (pkg.name === '24 Hours') {
                             popularClass = 'popular';
-                            popularBadge = '<div class="popular-badge">🔥 Most Popular</div>';
+                            popularBadge = '<div class="popular-badge">Most Popular</div>';
                         }
                         
                         let priceDisplay = `KES ${parseFloat(pkg.price).toLocaleString()}`;
@@ -832,10 +812,48 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
                     });
                     $('#packages-container').html(html);
                 },
-                error: function() {
-                    console.error('Failed to load packages');
+                error: function(xhr, status, error) {
+                    console.error('Failed to load packages:', error);
+                    showStaticPackages();
                 }
             });
+        }
+
+        function showStaticPackages() {
+            const packages = [
+                {id: 2, name: '3 Hours', duration_hours: 3, price: 15, is_midnight_package: false},
+                {id: 3, name: '24 Hours', duration_hours: 24, price: 30, is_midnight_package: false},
+                {id: 4, name: '3 Days', duration_hours: 72, price: 55, is_midnight_package: false},
+                {id: 5, name: '7 Days', duration_hours: 168, price: 150, is_midnight_package: false},
+                {id: 6, name: 'Till Midnight', duration_hours: 0, price: 150, is_midnight_package: true}
+            ];
+            
+            let html = '';
+            packages.forEach((pkg) => {
+                let popularClass = pkg.name === '24 Hours' ? 'popular' : '';
+                let popularBadge = pkg.name === '24 Hours' ? '<div class="popular-badge">Most Popular</div>' : '';
+                let durationText = pkg.is_midnight_package ? 'Valid Until Midnight (11:59 PM)' : 
+                                 `${pkg.duration_hours} Hour${pkg.duration_hours > 1 ? 's' : ''}`;
+                
+                html += `
+                    <div class="col-md-4 col-lg-4">
+                        <div class="package-card ${popularClass}" onclick="selectPackageStatic(${pkg.id}, '${pkg.name}', ${pkg.duration_hours}, ${pkg.price})">
+                            ${popularBadge}
+                            <div class="package-name">${pkg.name}</div>
+                            <div class="package-duration">
+                                <i class="far fa-clock"></i> ${durationText}
+                            </div>
+                            <div class="package-price">
+                                KES ${pkg.price}<small>KES</small>
+                            </div>
+                            <button class="btn-buy">
+                                <i class="fas fa-shopping-cart"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            $('#packages-container').html(html);
         }
 
         function selectPackage(packageId) {
@@ -844,8 +862,13 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
                 method: 'POST',
                 data: JSON.stringify({action: 'get_package', package_id: packageId}),
                 contentType: 'application/json',
+                dataType: 'json',
                 success: function(response) {
-                    selectedPackage = JSON.parse(response);
+                    selectedPackage = response;
+                    if (typeof selectedPackage === 'string') {
+                        selectedPackage = JSON.parse(selectedPackage);
+                    }
+                    
                     let durationText = selectedPackage.is_midnight_package ? 'Valid Until Midnight' : 
                                      `${selectedPackage.duration_hours} Hour${selectedPackage.duration_hours > 1 ? 's' : ''}`;
                     
@@ -857,11 +880,15 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
                         </div>
                     `);
                     $('#paymentModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to load package:', error);
+                    alert('Error loading package details. Please try again.');
                 }
             });
         }
 
-                function selectPackageStatic(id, name, hours, price) {
+        function selectPackageStatic(id, name, hours, price) {
             selectedPackage = {
                 id: id,
                 name: name,
@@ -913,7 +940,6 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
             $('#loading').css('display', 'flex');
 
             const paymentData = {
-                action: 'process_payment',
                 package_id: selectedPackage.id,
                 mac_address: macAddress,
                 phone: phone,
@@ -921,27 +947,86 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
             };
 
             $.ajax({
-                url: window.location.href,
+                url: 'initiate_payment.php',
                 method: 'POST',
                 data: JSON.stringify(paymentData),
                 contentType: 'application/json',
+                dataType: 'json',
                 success: function(response) {
                     $('#loading').hide();
-                    const result = JSON.parse(response);
                     
-                    if (result.success) {
+                    if (response.success) {
                         $('#paymentModal').modal('hide');
-                        showCredentials(result.username, result.password, result.end_time);
-                        startSessionMonitoring(result.end_time);
+                        $('#waitingModal').modal('show');
+                        startPollingPaymentStatus(response.checkoutRequestID);
                     } else {
-                        alert('Payment failed: ' + (result.message || 'Unknown error'));
+                        alert('Payment initiation failed: ' + (response.message || 'Unknown error'));
                     }
                 },
                 error: function(xhr, status, error) {
                     $('#loading').hide();
-                    alert('Payment processing failed. Please try again.\nError: ' + error);
+                    console.error('AJAX Error:', error);
+                    alert('Failed to initiate payment. Please try again.\nError: ' + error);
                 }
             });
+        }
+
+        function startPollingPaymentStatus(checkoutRequestID) {
+            let attempts = 0;
+            const maxAttempts = 60;
+            
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+            
+            pollInterval = setInterval(function() {
+                attempts++;
+                
+                $.ajax({
+                    url: 'check_payment_status.php',
+                    method: 'POST',
+                    data: JSON.stringify({checkoutRequestID: checkoutRequestID}),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'completed') {
+                            clearInterval(pollInterval);
+                            $('#waitingModal').modal('hide');
+                            showCredentials(response.username, response.password, response.end_time);
+                            startSessionMonitoring(response.end_time);
+                        } else if (response.status === 'failed') {
+                            clearInterval(pollInterval);
+                            $('#waitingModal').modal('hide');
+                            alert('Payment failed. Please try again.');
+                        } else {
+                            $('#paymentStatusMessage').html(`
+                                <small class="text-muted">
+                                    Waiting for payment confirmation... (${attempts}/${maxAttempts})
+                                </small>
+                            `);
+                        }
+                    },
+                    error: function() {
+                        if (attempts >= maxAttempts) {
+                            clearInterval(pollInterval);
+                            $('#waitingModal').modal('hide');
+                            alert('Payment confirmation timeout. Please check your payment status.');
+                        }
+                    }
+                });
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                }
+            }, 2000);
+        }
+
+        function cancelPayment() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+            $('#waitingModal').modal('hide');
+            alert('Payment cancelled. You can try again.');
         }
 
         function showCredentials(username, password, endTime) {
@@ -952,7 +1037,6 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
             $('#expiry-time').text('Valid until: ' + new Date(endTime).toLocaleString());
             $('#successModal').modal('show');
             
-            // Store in localStorage
             localStorage.setItem('wifi_username', username);
             localStorage.setItem('wifi_password', password);
             localStorage.setItem('wifi_expiry', endTime);
@@ -961,7 +1045,7 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
         function copyCredentials() {
             const text = $('#credentials-display').text();
             navigator.clipboard.writeText(text).then(() => {
-                alert('✅ Credentials copied to clipboard!');
+                alert('Credentials copied to clipboard!');
             }).catch(() => {
                 alert('Please copy manually: ' + text);
             });
@@ -973,12 +1057,20 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
                 method: 'POST',
                 data: JSON.stringify({action: 'check_session', mac_address: macAddress}),
                 contentType: 'application/json',
+                dataType: 'json',
                 success: function(response) {
-                    const result = JSON.parse(response);
+                    let result = response;
+                    if (typeof result === 'string') {
+                        result = JSON.parse(result);
+                    }
+                    
                     if (result.has_active_session) {
                         showCredentials(result.username, result.password, result.end_time);
                         startSessionMonitoring(result.end_time);
                     }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Session check failed:', error);
                 }
             });
         }
@@ -991,10 +1083,9 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
                 const diff = expiryDate - now;
                 
                 if (diff <= 0) {
-                    // Session expired
                     clearInterval(sessionCheckInterval);
                     $('#sessionTimer').fadeOut();
-                    alert('⏰ Your WiFi session has expired. Please purchase a new package to continue.');
+                    alert('Your WiFi session has expired. Please purchase a new package to continue.');
                     location.reload();
                     return;
                 }
@@ -1012,15 +1103,19 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
             updateTimer();
             sessionCheckInterval = setInterval(updateTimer, 1000);
             
-            // Check session status every 30 seconds
             setInterval(() => {
                 $.ajax({
                     url: window.location.href,
                     method: 'POST',
                     data: JSON.stringify({action: 'check_status', mac_address: macAddress}),
                     contentType: 'application/json',
+                    dataType: 'json',
                     success: function(response) {
-                        const result = JSON.parse(response);
+                        let result = response;
+                        if (typeof result === 'string') {
+                            result = JSON.parse(result);
+                        }
+                        
                         if (!result.is_active) {
                             clearInterval(sessionCheckInterval);
                             alert('Your session has expired. Please purchase a new package.');
@@ -1031,7 +1126,6 @@ setcookie('device_mac', $mac_address, time() + (86400 * 30), "/");
             }, 30000);
         }
 
-        // Auto-refresh session status when page becomes visible
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 checkActiveSession();

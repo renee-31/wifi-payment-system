@@ -22,6 +22,11 @@ class MpesaAPI {
     
     // Generate Access Token
     public function generateAccessToken() {
+        if (!function_exists('curl_init')) {
+            file_put_contents('mpesa_log.txt', date('Y-m-d H:i:s') . ' curl extension is not available' . PHP_EOL, FILE_APPEND);
+            return null;
+        }
+
         $url = $this->environment === 'sandbox' 
             ? 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
             : 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
@@ -33,10 +38,16 @@ class MpesaAPI {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         
         $response = curl_exec($ch);
+        if ($response === false) {
+            file_put_contents('mpesa_log.txt', date('Y-m-d H:i:s') . ' Access token curl error: ' . curl_error($ch) . PHP_EOL, FILE_APPEND);
+            curl_close($ch);
+            return null;
+        }
+
         curl_close($ch);
         
         $result = json_decode($response);
-        return $result->access_token;
+        return $result->access_token ?? null;
     }
     
     // Generate STK Push Password
@@ -49,6 +60,14 @@ class MpesaAPI {
     // Initiate STK Push Payment
     public function stkPush($phoneNumber, $amount, $accountReference, $callbackUrl) {
         $accessToken = $this->generateAccessToken();
+        if (empty($accessToken)) {
+            return [
+                'ResponseCode' => '1',
+                'ResponseDescription' => 'Failed to generate access token',
+                'errorMessage' => 'Failed to generate access token'
+            ];
+        }
+
         $passwordData = $this->generatePassword();
         
         // Format phone number to 254XXXXXXXXX
@@ -85,9 +104,30 @@ class MpesaAPI {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
         
         $response = curl_exec($ch);
+        if ($response === false) {
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            file_put_contents('mpesa_log.txt', date('Y-m-d H:i:s') . ' STK curl error: ' . $curlError . PHP_EOL, FILE_APPEND);
+            return [
+                'ResponseCode' => '1',
+                'ResponseDescription' => 'STK push request failed',
+                'errorMessage' => $curlError
+            ];
+        }
+
         curl_close($ch);
         
-        return json_decode($response, true);
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded)) {
+            file_put_contents('mpesa_log.txt', date('Y-m-d H:i:s') . ' STK invalid JSON response: ' . $response . PHP_EOL, FILE_APPEND);
+            return [
+                'ResponseCode' => '1',
+                'ResponseDescription' => 'Invalid M-Pesa response',
+                'errorMessage' => 'Invalid M-Pesa response'
+            ];
+        }
+
+        return $decoded;
     }
     
     // Format phone number to international format

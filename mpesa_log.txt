@@ -1,0 +1,19 @@
+2026-05-11 22:07:35 Callback received: {"package_id":4,"mac_address":"00:00:00:00:00:00","phone":"0797561978","amount":"55.00"}
+Invalid callback structure received
+2026-05-11 22:07:54 Callback received: {"package_id":4,"mac_address":"00:00:00:00:00:00","phone":"0797561978","amount":"55.00"}
+Invalid callback structure received
+2026-05-11 22:08:26 Callback received: {"package_id":4,"mac_address":"00:00:00:00:00:00","phone":"0797561978","amount":"55.00"}
+Invalid callback structure received
+2026-05-11 22:29:43 STK request: {"transaction_id":"TXN_1778531380_4155","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"fa8c-47b5-a1d7-ebaebbc78c297653","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:29:53 STK request: {"transaction_id":"TXN_1778531390_9742","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"d38c-4f23-af33-38266ca3dd6b3101","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:30:58 STK request: {"transaction_id":"TXN_1778531456_4982","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"d38c-4f23-af33-38266ca3dd6b3122","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:31:11 STK request: {"transaction_id":"TXN_1778531469_8567","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"fa8c-47b5-a1d7-ebaebbc78c297727","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:31:18 STK request: {"transaction_id":"TXN_1778531476_5191","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"fa8c-47b5-a1d7-ebaebbc78c297728","errorCode":"500.003.02","errorMessage":"System is busy. Please try again in few minutes."}}
+2026-05-11 22:31:58 STK request: {"transaction_id":"TXN_1778531515_3921","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"fa8c-47b5-a1d7-ebaebbc78c297737","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:32:28 STK request: {"transaction_id":"TXN_1778531545_8920","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"e9d4-4e35-99d1-3876a8cbbc4046639","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:34:43 STK request: {"transaction_id":"TXN_1778531680_6364","phone":"0797561978","amount":15,"mac_address":"00:00:00:00:00:00","response":{"requestId":"fa8c-47b5-a1d7-ebaebbc78c297840","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:35:09 STK request: {"transaction_id":"TXN_1778531706_9528","phone":"254797561978","amount":150,"mac_address":"00:00:00:00:00:00","response":{"requestId":"fa8c-47b5-a1d7-ebaebbc78c297866","errorCode":"400.002.02","errorMessage":"Bad Request - Invalid CallBackURL"}}
+2026-05-11 22:39:28 Using callback URL: https://dice-premium-landlord.ngrok-free.app/callback.php
+2026-05-11 22:39:31 STK Response: {"MerchantRequestID":"d38c-4f23-af33-38266ca3dd6b3197","CheckoutRequestID":"ws_CO_11052026233931094797561978","ResponseCode":"0","ResponseDescription":"Success. Request accepted for processing","CustomerMessage":"Success. Request accepted for processing"}
+2026-05-11 22:40:29 Using callback URL: https://dice-premium-landlord.ngrok-free.app/callback.php
+2026-05-11 22:40:32 STK Response: {"MerchantRequestID":"fa8c-47b5-a1d7-ebaebbc78c298078","CheckoutRequestID":"ws_CO_11052026234032156115777875","ResponseCode":"0","ResponseDescription":"Success. Request accepted for processing","CustomerMessage":"Success. Request accepted for processing"}
